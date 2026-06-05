@@ -146,7 +146,7 @@ module UnovaFacturX
     end
 
     def call
-      builder = Nokogiri::XML::Builder.new(encoding: 'UTF-8') do |xml|
+      builder = ::Nokogiri::XML::Builder.new(encoding: 'UTF-8') do |xml|
         xml['rsm'].CrossIndustryInvoice(
           'xmlns:rsm' => 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
           'xmlns:udt' => 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
@@ -431,7 +431,7 @@ module UnovaFacturX
 
       raise "Java non disponible" unless status.exitstatus != 127
 
-      report = Nokogiri::XML(stdout)
+      report = ::Nokogiri::XML(stdout)
 
       svrl_namespace = { 'svrl' => 'http://purl.oclc.org/dsdl/svrl' }.freeze
       errors = report.xpath(

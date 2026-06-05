@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "hexapdf"
+require "nokogiri"
+
 require_relative "unova_factur_x/version"
 require_relative "unova_factur_x/xml_generator"
 require_relative "unova_factur_x/factur_x_generator"

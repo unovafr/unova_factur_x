@@ -8,11 +8,11 @@ module UnovaFacturX
     def call
       # Override règles de base HexaPDF pour pas qu'il force la version en 2.0
       begin
-        HexaPDF::Type::Catalog.send(:remove_field, :AF)
+        ::HexaPDF::Type::Catalog.send(:remove_field, :AF)
       rescue StandardError
         nil
       end
-      HexaPDF::Type::Catalog.define_field :AF, type: HexaPDF::PDFArray
+      ::HexaPDF::Type::Catalog.define_field :AF, type: ::HexaPDF::PDFArray
 
       # Génération du XML grace au services (hash + xml)
       xml_doc = @xml
@@ -24,7 +24,7 @@ module UnovaFacturX
       pdf_io.rewind
 
       # Création d'un nouveau PDF avec HexaPDF
-      doc = HexaPDF::Document.new(io: pdf_io)
+      doc = ::HexaPDF::Document.new(io: pdf_io)
       doc.task(:pdfa, level: "3b") # PDF format A/3
 
       # Ajout du XML au PDF
