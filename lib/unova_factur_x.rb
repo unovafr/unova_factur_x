@@ -10,13 +10,13 @@ require_relative "unova_factur_x/factur_x_generator"
 module UnovaFacturX
   class Error < StandardError; end
 
-  def self.generate(pdf:, document_hash:, type: :invoice, with_validations: true)
+  def self.generate(pdf:, document_hash:, type: :invoice, with_validations: true, devise: "EUR")
     unless %i[invoice credit].include?(type)
       raise ArgumentError, "Type must be :invoice or :credit (default is :invoice)"
     end
 
     # Génération du XML à partir du hash en entré
-    xml = UnovaFacturX::XmlGenerator.new(document_hash, type: type, validate: with_validations).call
+    xml = UnovaFacturX::XmlGenerator.new(document_hash, type: type, validate: with_validations, devise: devise).call
 
     # Génération et retour du PDF FacturX à partir du PDF en entré et du XML généré
     UnovaFacturX::FacturXGenerator.new(pdf: pdf, xml: xml).call

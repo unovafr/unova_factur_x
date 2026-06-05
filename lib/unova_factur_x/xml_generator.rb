@@ -8,13 +8,13 @@ module UnovaFacturX
     # Aussi, pour plus de simplicité, tous les attributs de la facture/du crédit sont attendus en String.
     # @example
     #   # Générer un XML de facture standard
-    #   xml = XmlGeneratorService.new(invoice).call
+    #   xml = XmlGenerator.new(invoice).call
     #
     #   # Générer un XML pour un avoir
-    #   xml = XmlGeneratorService.new(credit, type: :credit).call
+    #   xml = XmlGenerator.new(credit, type: :credit).call
     #
     #   # Configurer la monnaie utilisée sur la facture
-    #   xml = XmlGeneratorService.new(invoice, devise: "USD") # 'EUR' par défaut
+    #   xml = XmlGenerator.new(invoice, devise: "USD") # 'EUR' par défaut
     #
     #   # Exemple de hash pour une facture (Même chose pour un avoir /!\ Ne pas mettre les valeurs de l'avoir en négatif /!\) :
     #   document = {

@@ -14,13 +14,14 @@ gem "unova_factur_x", git: "git@gitlab.unova.fr:unova-factur-x/unova-factur-x.gi
 Il suffit d'appeler la fonction generate de la gem à l'envoi du PDF par le controller avec les paramètres suivants :
 - pdf: Le fichier PDF de la facture/avoir à transformer en Factur-X.
 - document_hash: Le hash d'entrée pour la génération du XML, voir ci-après pour plus de détails.
-- type: Le type de document (:invoice par défaut):
+- [optionnel] type: Le type de document (:invoice par défaut):
   - :invoice pour une facture,
   - :credit pour un avoir,
-- with_validations: true ou false, si à true, va essayer de valider les données du hash fourni pour Factur-X /!\ Nécessite Java, à désactiver si Java non présent /!\ (true par défaut)
+- [optionnel] with_validations: true ou false, si à true, va essayer de valider les données du hash fourni pour Factur-X /!\ Nécessite Java, à désactiver si Java non présent /!\ (true par défaut)
+- [optionnel] devise: pour configurer la monnaie utilisée sur la facture/l'avoir (Euros 'EUR' par défaut).
 ```ruby
 # Exemple d'utilisation :
-send_data UnovaFacturX.generate(pdf: pdf, document_hash: document_hash, type: :invoice, with_validations: true),
+send_data UnovaFacturX.generate(pdf: pdf, document_hash: document_hash, type: :invoice, with_validations: true, devise: "USD"),
           filename: "Factur-X.pdf",
           type: 'application/pdf',
           disposition: 'attachment'
