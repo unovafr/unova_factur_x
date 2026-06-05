@@ -12,7 +12,16 @@ gem "unova_factur_x", git: "git@gitlab.unova.fr:unova-factur-x/unova-factur-x.gi
 ## Utilisation
 
 Il suffit d'appeler la fonction generate de la gem à l'envoi du PDF par le controller avec les paramètres suivants :
-- pdf: Le fichier PDF de la facture/avoir à transformer en Factur-X.
+- pdf: Le fichier PDF de la facture/avoir à transformer en Factur-X. Prends en charge ces deux formes :
+  - Depuis un fichier :
+    ```ruby
+    path = ActiveStorage::Blob.service.send(:path_for, @invoice.file.key)
+    pdf = File.open(path, 'rb')
+    ```
+  - Depuis une génération Prawn :
+    ```ruby
+    pdf = DocumentPdf.new(**options).render
+    ```
 - document_hash: Le hash d'entrée pour la génération du XML, voir ci-après pour plus de détails.
 - [optionnel] type: Le type de document (:invoice par défaut):
   - :invoice pour une facture,

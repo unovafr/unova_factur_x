@@ -20,7 +20,7 @@ module UnovaFacturX
       xml_io = StringIO.new(xml_string)
 
       # Transformation du PDF en StringIO
-      pdf_io = StringIO.new(@pdf)
+      pdf_io = @pdf.is_a?(File) ? @pdf : StringIO.new(@pdf)
       pdf_io.rewind
 
       # Création d'un nouveau PDF avec HexaPDF
