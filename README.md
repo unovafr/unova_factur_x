@@ -70,7 +70,7 @@ document_hash = {
     # [BLOC OPTIONNEL]
     delivery: {
       gln: "Identifiant GLN (schemeID 0088) (BT-71) [OPTIONNEL]",
-      gln_scheme: "0088: GLN (GS1), 0002: SIRENE (France), 9906: SIRET, 9915: TVA intracom FR, 0060:	DUNS [OPTIONNEL | OBLIGATOIRE SI GLN]",
+      gln_scheme: "0088: GLN (GS1), 0002: SIRENE (France), 9906: SIRET, 9915: TVA intracom FR, 0060: DUNS [OPTIONNEL | OBLIGATOIRE SI GLN]",
       date: "Date réelle de livraison format YYYYMMDD (BT-72) [OPTIONNEL]",
       address: {
         line1: "Rue livraison (BT-75) [OPTIONNEL]",
