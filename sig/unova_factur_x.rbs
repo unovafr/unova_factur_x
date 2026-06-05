@@ -1,0 +1,10 @@
+module UnovaFacturX
+  VERSION: String
+  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+  def self.generate: (
+      pdf: String,
+      document_hash: Hash[Symbol | String, untyped],
+      ?type: Symbol,
+      ?with_validations: bool
+    ) -> String
+end
