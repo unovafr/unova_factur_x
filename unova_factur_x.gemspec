@@ -13,10 +13,8 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://gitlab.unova.fr/unova-factur-x/unova-factur-x"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
-  spec.metadata["allowed_push_host"] = ""
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://gitlab.unova.fr/unova-factur-x/unova-factur-x"
-  spec.metadata["changelog_uri"] = ""
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
