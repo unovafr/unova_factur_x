@@ -166,4 +166,16 @@ Cette gem embarque les composants suivants :
 - Saxon-HE (processeur XSLT et XQuery) développé par Saxonica Limited, sous licence Mozilla Public License 2.0 (MPL-2.0).
 
 Le JAR Saxon-HE est redistribué tel quel et reste soumis à sa licence d’origine.
-Une copie de la license MPL-2.0 est incluse dans ce repository.
+Une copie de la licence MPL-2.0 est incluse dans ce repository sous le dossier LICENSES.
+
+## Licence
+
+Ce projet est sous licence Apache 2.0.
+
+La licence Apache 2.0 autorise l'utilisation, la modification, la distribution et la commercialisation du logiciel, à condition de conserver les mentions de droits d'auteur et de respecter les termes de la licence.
+
+Sauf disposition contraire prévue par la loi ou convenue par écrit, ce logiciel est distribué « en l'état », sans garantie ni condition d'aucune sorte, expresse ou implicite.
+
+Pour consulter l'intégralité des conditions, reportez-vous au fichier `LICENSE` situé à la racine du dépôt ou au texte officiel : https://www.apache.org/licenses/LICENSE-2.0
+
+Copyright (C) UNOVA
