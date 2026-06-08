@@ -6,7 +6,7 @@ Gem permettant la génération de factures et d'avoirs au format Factur-X.
 
 Ajouter la gem au gemfile et faire un ```bundle install```
 ```ruby
-gem "unova_factur_x", git: "git@gitlab.unova.fr:unova-factur-x/unova-factur-x.git"
+gem "unova_factur_x"
 ```
 
 ## Utilisation
