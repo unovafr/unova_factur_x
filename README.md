@@ -158,3 +158,12 @@ document_hash = {
     }
 }
 ```
+
+## Composants tiers
+
+Cette gem embarque les composants suivants :
+
+- Saxon-HE (processeur XSLT et XQuery) développé par Saxonica Limited, sous licence Mozilla Public License 2.0 (MPL-2.0).
+
+Le JAR Saxon-HE est redistribué tel quel et reste soumis à sa licence d’origine.
+Une copie de la license MPL-2.0 est incluse dans ce repository.
