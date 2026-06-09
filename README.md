@@ -1,181 +1,194 @@
 # UnovaFacturX
 
-Gem permettant la génération de factures et d'avoirs au format Factur-X.
+Factur-X is a hybrid electronic invoice format with a human-readable PDF file that contains, as an attachment, a structured XML file.
+This gem allows you to transform invoices and credits notes from the PDF format to the Factur-X format.
 
-## Installation
+## Setup
 
-Ajouter la gem au gemfile et faire un ```bundle install```
+Add the gem to your gemfile and `bundle install`:
 ```ruby
 gem "unova_factur_x"
 ```
+If you want to use the validator for the generated XML file of the Factur-X, you also need to have Java installed on your computer.
 
-## Utilisation
+## Usage
 
-Il suffit d'appeler la fonction generate de la gem à l'envoi du PDF par le controller avec les paramètres suivants :
-- pdf: Le fichier PDF de la facture/avoir à transformer en Factur-X. Prends en charge ces deux formes :
-  - Depuis un fichier :
+Simply call the `generate` method of the gem when you want to send the PDF to the user from your controller.
+The method accepts the following parameters:
+- pdf: The PDF file of the invoice/credit note to transform to Factur-X. It can be provided in two ways:
+  - From a file:
     ```ruby
     path = ActiveStorage::Blob.service.send(:path_for, @invoice.file.key)
     pdf = File.open(path, 'rb')
     ```
-  - Depuis une génération Prawn :
+  - From a Prawn-generated PDF:
     ```ruby
-    pdf = DocumentPdf.new(**options).render
+    pdf = PdfDocument.new(**options).render
     ```
-- document_hash: Le hash d'entrée pour la génération du XML, voir ci-après pour plus de détails.
-- [optionnel] type: Le type de document (:invoice par défaut):
-  - :invoice pour une facture,
-  - :credit pour un avoir,
-- [optionnel] with_validations: true ou false, si à true, va essayer de valider les données du hash fourni pour Factur-X /!\ Nécessite Java, à désactiver si Java non présent /!\ (true par défaut)
-- [optionnel] devise: pour configurer la monnaie utilisée sur la facture/l'avoir (Euros 'EUR' par défaut).
+- document_hash: The hash required to generate the XML part of the Factur-X. See below for more details.
+- [optional] type: The document type:
+  - `:invoice` for an invoice (default value),
+  - `:credit` for a credit note,
+- [optional] with_validations: `true` or `false`, default as `true`. If true, the generated XML file will be checked using the validator. **WARNING: Java is required for this to work**
+- [optional] currency: To configure the used currency (Default is euros 'EUR').
 ```ruby
-# Exemple d'utilisation :
-send_data UnovaFacturX.generate(pdf: pdf, document_hash: document_hash, type: :invoice, with_validations: true, devise: "USD"),
+# Usage example:
+send_data UnovaFacturX.generate(pdf: pdf, document_hash: document_hash, type: :invoice, with_validations: true, currency: "USD"),
           filename: "Factur-X.pdf",
           type: 'application/pdf',
           disposition: 'attachment'
 ```
 
-Pour le hash du document attendu :
-- Les montants fournis doivent être arithmétiquement cohérents, aucune correction automatique n’est effectuée.
-- Tous les attributs de la facture/du crédit sont attendus en String.
-- Respecter la forme ci-dessous :
+### Document hash structure overview
+
+
+For the expected document hash:
+- The document hash is a structured Ruby hash composed of the following main sections:
+  - `seller`
+  - `buyer`
+  - `items`
+  - `payment_means`
+  - `vat_breakdown`
+  - `totals`
+- Provided amounts must be arithmetically consistent; no automatic correction is performed.
+- All attributes must be provided as strings.
+- Follow the structure below:
 ```ruby
-# Exemple de hash pour une facture (Même chose pour un avoir /!\ Ne pas mettre les valeurs de l'avoir en négatif /!\) :
+# Example hash for an invoice (the same applies to a credit note; IMPORTANT: do not use negative values for credit note):
 document_hash = {
-    id: "Numéro unique de facture (BT-1) [OBLIGATOIRE]",
-    issue_date: "Date d'émission format YYYYMMDD (BT-2) [OBLIGATOIRE]",
-    
-    seller: {
-      name: "Nom légal du vendeur (BT-27) [OBLIGATOIRE]",
-      legal_id: "Identifiant légal (SIREN/SIRET) (BT-30) [OPTIONNEL]",
-      vat_number: "Numéro TVA avec préfixe pays acheteur (ex: FR123...) (BT-31) [OPTIONNEL]",
-      address: {
-        line1: "Rue (BT-35) [OBLIGATOIRE]",
-        line2: "Complément adresse [OPTIONNEL]",
-        postcode: "Code postal (BT-38) [OBLIGATOIRE]",
-        city: "Ville (BT-37) [OBLIGATOIRE]",
-        country: "Code pays ISO 3166-1 alpha-2 (BT-40) [OBLIGATOIRE]",
-      }
-    },
-    
-    # [BLOC OBLIGATOIRE]
-    buyer: {
-      id: "Identifiant interne client (BT-46) [OPTIONNEL]",
-      name: "Nom légal du client (BT-44) [OBLIGATOIRE]",
-      vat_number: "Numéro TVA avec préfixe pays acheteur (ex: FR123...) (BT-48) [OPTIONNEL]",
-      contact: { # [OPTIONNEL]
-        name: "Nom du contact client (BT-56) [OPTIONNEL]",
-      },
-      address: {
-        line1: "Rue (BT-50) [OBLIGATOIRE]",
-        line2: "Complément adresse [OPTIONNEL]",
-        postcode: "Code postal (BT-53) [OBLIGATOIRE]",
-        city: "Ville (BT-52) [OBLIGATOIRE]",
-        country: "Code pays ISO 3166-1 alpha-2 (BT-55) [OBLIGATOIRE]",
-      }
-    },
-    
-    # [BLOC OPTIONNEL]
-    delivery: {
-      gln: "Identifiant GLN (schemeID 0088) (BT-71) [OPTIONNEL]",
-      gln_scheme: "0088: GLN (GS1), 0002: SIRENE (France), 9906: SIRET, 9915: TVA intracom FR, 0060: DUNS [OPTIONNEL | OBLIGATOIRE SI GLN]",
-      date: "Date réelle de livraison format YYYYMMDD (BT-72) [OPTIONNEL]",
-      address: {
-        line1: "Rue livraison (BT-75) [OPTIONNEL]",
-        line2: "Complément adresse livraison [OPTIONNEL]",
-        postcode: "Code postal livraison (BT-75) [OPTIONNEL]",
-        city: "Ville livraison (BT-74) [OPTIONNEL]",
-        country: "Code pays ISO 3166-1 alpha-2 (BT-76) [OPTIONNEL]",
-      }
-    },
-    
-    # [BLOC OBLIGATOIRE] (minimum 1 item)
-    items: [
-      {
-        line_id: "Numéro de ligne (BT-126) [OBLIGATOIRE]",
-        seller_assigned_id: "Identifiant interne produit (BT-155) [OPTIONNEL]",
-        name: "Désignation produit/service (BT-153) [OBLIGATOIRE]",
-        quantity: "Quantité (BT-129) [OBLIGATOIRE]",
-        unit_code: "Code unité UN/ECE Rec20 (ex: H87, C62, DAY) (BT-130) [OBLIGATOIRE]",
-        price_ht: "Prix unitaire net HT (BT-146) [OBLIGATOIRE]",
-        vat_rate: "Taux TVA (BT-152) [OBLIGATOIRE]",
-        vat_category: "Catégorie TVA (S, Z, E, AE...) (BT-151) [OBLIGATOIRE]",
-        discount: { # [OPTIONNEL]
-          total_amount: "Montant de la remise applicable à la ligne de facture (BT-136) [OPTIONNEL sauf si discount]",
-          percentage: "Pourcentage de remise applicable à la ligne de facture (BT-138) [OPTIONNEL sauf si discount]",
-          # reason OU reason_code [OBLIGATOIRE] si bloc présent
-          reason: "Motif de la remise applicable à la ligne de facture (BT-139) [OPTIONNEL sauf si discount]",
-          reason_code: "Code de motif de la remise applicable à la ligne de facture (BT-140) [OPTIONNEL sauf si discount]"
-        },
-        line_total: "Montant net de la ligne HT = Quantité × Prix unitaire net (BT-131)"
-      }
-    ],
-    
-    # [BLOC OBLIGATOIRE]
-    payment_means: {
-      type_code: "Code UNCL 4461 (30 = virement) (BT-81) [OBLIGATOIRE]",
-      iban: "IBAN bénéficiaire (BT-84) [OBLIGATOIRE si virement]",
-    },
-    
-    # [BLOC OBLIGATOIRE]
-    vat_breakdown: [
-      {
-        vat_category: "Catégorie TVA (BT-118) [OBLIGATOIRE]",
-        vat_rate: "Taux TVA % (BT-119) [OBLIGATOIRE]",
-        taxable_amount: "Base HT pour ce taux (BT-116) [OBLIGATOIRE]",
-        tax_amount: "Montant TVA pour ce taux (BT-117) [OBLIGATOIRE]",
-        # exemption_reason OU exemption_reason_code [OBLIGATOIRE] si vat_category = "E" (Exempt)
-        exemption_reason: "Motif d'exonération de la TVA (BT-120)",
-        exemption_reason_code: "Code de motif d'exonération de la TVA (BT-121)"
-      }
-    ],
-    
-    # [BLOC OPTIONNEL]
-    discount: [ # Ce bloc est un tableau avec un item par taux de TVA d'item. Il doit donc avoir la même longueur que le bloc vat_breakdown
-      {
-        vat_category: "Catégorie TVA (BT-118) [OBLIGATOIRE si le bloc est présent]",
-        vat_rate: "Taux TVA % (BT-119) [OBLIGATOIRE si le bloc est présent]",
-        total_amount: "Montant total de la remise pour le taux de TVA [OBLIGATOIRE si percentage présent]",
-        percentage: "% de remise au niveau du document si la remise est en % (BT-94) [OPTIONNEL]",
-        # reason OU reason_code [OBLIGATOIRE] si bloc présent
-        reason: "Motif de la remise au niveau du document (BT-97)",
-        reason_code: "Code de motif de la remise au niveau du document (BT-98)",
-      }
-    ],
-    
-    # [BLOC OBLIGATOIRE]
-    totals: {
-      line_total_ht: "Total HT lignes (BT-106) [OBLIGATOIRE]",
-      total_discount: "Somme des remises au niveau du document (BT-107) [OBLIGATOIRE si bloc discount présent]",
-      tax_basis_total_ht: "Total bases taxables (BT-109) [OBLIGATOIRE]",
-      tax_total: "Total TVA (BT-110) [OBLIGATOIRE]",
-      grand_total_ttc: "Total TTC (BT-112) [OBLIGATOIRE]",
-      amount_due: "Montant à payer (BT-115) [OPTIONNEL]",
-      # due_date OU description [OBLIGATOIRE] si amount_due est défini et positif
-      due_date: "Date due du paiement format YYYYMMDD (BT-9)",
-      description: "Termes du paiement (BT-20)"
+  id: "Unique invoice number (BT-1) [REQUIRED]",
+  issue_date: "Issue date in YYYYMMDD format (BT-2) [REQUIRED]",
+
+  seller: {
+    name: "Seller legal name (BT-27) [REQUIRED]",
+    legal_id: "Legal identifier (SIREN/SIRET) (BT-30) [OPTIONAL]",
+    vat_number: "VAT number including buyer country prefix (e.g. FR123...) (BT-31) [OPTIONAL]",
+    address: {
+      line1: "Street address (BT-35) [REQUIRED]",
+      line2: "Address complement [OPTIONAL]",
+      postcode: "Postal code (BT-38) [REQUIRED]",
+      city: "City (BT-37) [REQUIRED]",
+      country: "ISO 3166-1 alpha-2 country code (BT-40) [REQUIRED]",
     }
+  },
+
+  # [REQUIRED BLOCK]
+  buyer: {
+    id: "Internal customer identifier (BT-46) [OPTIONAL]",
+    name: "Customer legal name (BT-44) [REQUIRED]",
+    vat_number: "VAT number including buyer country prefix (e.g. FR123...) (BT-48) [OPTIONAL]",
+    contact: { # [OPTIONAL]
+               name: "Customer contact name (BT-56) [OPTIONAL]",
+    },
+    address: {
+      line1: "Street address (BT-50) [REQUIRED]",
+      line2: "Address complement [OPTIONAL]",
+      postcode: "Postal code (BT-53) [REQUIRED]",
+      city: "City (BT-52) [REQUIRED]",
+      country: "ISO 3166-1 alpha-2 country code (BT-55) [REQUIRED]",
+    }
+  },
+
+  # [OPTIONAL BLOCK]
+  delivery: {
+    gln: "GLN identifier (schemeID 0088) (BT-71) [OPTIONAL]",
+    gln_scheme: "0088: GLN (GS1), 0002: SIRENE (France), 9906: SIRET, 9915: French intra-community VAT, 0060: DUNS [OPTIONAL | REQUIRED IF GLN IS PROVIDED]",
+    date: "Actual delivery date in YYYYMMDD format (BT-72) [OPTIONAL]",
+    address: {
+      line1: "Delivery street address (BT-75) [OPTIONAL]",
+      line2: "Delivery address complement [OPTIONAL]",
+      postcode: "Delivery postal code (BT-75) [OPTIONAL]",
+      city: "Delivery city (BT-74) [OPTIONAL]",
+      country: "ISO 3166-1 alpha-2 country code (BT-76) [OPTIONAL]",
+    }
+  },
+
+  # [REQUIRED BLOCK] (minimum 1 item)
+  items: [
+    {
+      line_id: "Line number (BT-126) [REQUIRED]",
+      seller_assigned_id: "Internal product identifier (BT-155) [OPTIONAL]",
+      name: "Product/service description (BT-153) [REQUIRED]",
+      quantity: "Quantity (BT-129) [REQUIRED]",
+      unit_code: "UN/ECE Rec20 unit code (e.g. H87, C62, DAY) (BT-130) [REQUIRED]",
+      price_ht: "Net unit price excluding VAT (BT-146) [REQUIRED]",
+      vat_rate: "VAT rate (BT-152) [REQUIRED]",
+      vat_category: "VAT category (S, Z, E, AE...) (BT-151) [REQUIRED]",
+      discount: { # [OPTIONAL]
+        total_amount: "Discount amount applicable to the invoice line (BT-136) [OPTIONAL unless discount block is present]",
+        percentage: "Discount percentage applicable to the invoice line (BT-138) [OPTIONAL unless discount block is present]",
+        # reason OR reason_code [REQUIRED] if block is present
+        reason: "Reason for the invoice line discount (BT-139) [OPTIONAL unless discount block is present]",
+        reason_code: "Reason code for the invoice line discount (BT-140) [OPTIONAL unless discount block is present]"
+      },
+      line_total: "Net line amount excluding VAT = Quantity × Net unit price (BT-131)"
+    }
+  ],
+
+  # [REQUIRED BLOCK]
+  payment_means: {
+    type_code: "UNCL 4461 code (30 = bank transfer) (BT-81) [REQUIRED]",
+    iban: "Beneficiary IBAN (BT-84) [REQUIRED for bank transfer]",
+  },
+
+  # [REQUIRED BLOCK]
+  vat_breakdown: [
+    {
+      vat_category: "VAT category (BT-118) [REQUIRED]",
+      vat_rate: "VAT rate % (BT-119) [REQUIRED]",
+      taxable_amount: "Taxable amount excluding VAT for this rate (BT-116) [REQUIRED]",
+      tax_amount: "VAT amount for this rate (BT-117) [REQUIRED]",
+      # exemption_reason OR exemption_reason_code [REQUIRED] if vat_category = 'E' (Exempt)
+      exemption_reason: "VAT exemption reason (BT-120)",
+      exemption_reason_code: "VAT exemption reason code (BT-121)"
+    }
+  ],
+
+  # [OPTIONAL BLOCK]
+  discount: [ # This block is an array with one item per item VAT rate. Therefore, it must have the same length as the vat_breakdown block.
+    {
+      vat_category: "VAT category (BT-118) [REQUIRED if block is present]",
+      vat_rate: "VAT rate % (BT-119) [REQUIRED if block is present]",
+      total_amount: "Total discount amount for the VAT rate [REQUIRED if percentage is present]",
+      percentage: "Document-level discount percentage if the discount is expressed as a percentage (BT-94) [OPTIONAL]",
+      # reason OR reason_code [REQUIRED] if block is present
+      reason: "Reason for the document-level discount (BT-97)",
+      reason_code: "Reason code for the document-level discount (BT-98)",
+    }
+  ],
+
+  # [REQUIRED BLOCK]
+  totals: {
+    line_total_ht: "Total line amount excluding VAT (BT-106) [REQUIRED]",
+    total_discount: "Sum of document-level discounts (BT-107) [REQUIRED if discount block is present]",
+    tax_basis_total_ht: "Total taxable amount (BT-109) [REQUIRED]",
+    tax_total: "Total VAT amount (BT-110) [REQUIRED]",
+    grand_total_ttc: "Grand total including VAT (BT-112) [REQUIRED]",
+    amount_due: "Amount due for payment (BT-115) [OPTIONAL]",
+    # due_date OR description [REQUIRED] if amount_due is defined and positive
+    due_date: "Payment due date in YYYYMMDD format (BT-9)",
+    description: "Payment terms (BT-20)"
+  }
 }
 ```
 
-## Composants tiers
+## Third-Party Components
 
-Cette gem embarque les composants suivants :
+This gem includes the following third-party component:
 
-- Saxon-HE (processeur XSLT et XQuery) développé par Saxonica Limited, sous licence Mozilla Public License 2.0 (MPL-2.0).
+- Saxon-HE (XSLT and XQuery processor), developed by Saxonica Limited and licensed under the Mozilla Public License 2.0 (MPL-2.0).
 
-Le JAR Saxon-HE est redistribué tel quel et reste soumis à sa licence d’origine.
-Une copie de la licence MPL-2.0 est incluse dans ce repository sous le dossier LICENSES.
+The Saxon-HE JAR is redistributed as-is and remains subject to its original license terms.
+A copy of the MPL-2.0 license is included in this repository under the LICENSES directory.
 
-## Licence
+## License
 
-Ce projet est sous licence Apache 2.0.
+This project is licensed under the Apache License 2.0.
 
-La licence Apache 2.0 autorise l'utilisation, la modification, la distribution et la commercialisation du logiciel, à condition de conserver les mentions de droits d'auteur et de respecter les termes de la licence.
+The Apache License 2.0 permits the use, modification, distribution, and commercialization of the software, provided that copyright notices are retained and the terms of the license are respected.
 
-Sauf disposition contraire prévue par la loi ou convenue par écrit, ce logiciel est distribué « en l'état », sans garantie ni condition d'aucune sorte, expresse ou implicite.
+Unless required by applicable law or agreed to in writing, this software is distributed on an "AS IS" basis, without warranties or conditions of any kind, either express or implied.
 
-Pour consulter l'intégralité des conditions, reportez-vous au fichier `LICENSE` situé à la racine du dépôt ou au texte officiel : https://www.apache.org/licenses/LICENSE-2.0
+For the full license terms, refer to the LICENSE file located at the root of the repository or to the official license text: https://www.apache.org/licenses/LICENSE-2.0
 
-Copyright (C) UNOVA
+Copyright (c) 2026 UNOVA

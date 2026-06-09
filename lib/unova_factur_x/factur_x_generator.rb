@@ -6,7 +6,7 @@ module UnovaFacturX
     end
 
     def call
-      # Override règles de base HexaPDF pour pas qu'il force la version en 2.0
+      # Override HexaPDF default rules to prevent it from forcing PDF version 2.0
       begin
         ::HexaPDF::Type::Catalog.send(:remove_field, :AF)
       rescue StandardError
@@ -14,20 +14,20 @@ module UnovaFacturX
       end
       ::HexaPDF::Type::Catalog.define_field :AF, type: ::HexaPDF::PDFArray
 
-      # Génération du XML grace au services (hash + xml)
+      # Generate the XML using the generator
       xml_doc = @xml
       xml_string = xml_doc.to_xml
       xml_io = StringIO.new(xml_string)
 
-      # Transformation du PDF en StringIO
+      # Convert the PDF into a StringIO object
       pdf_io = @pdf.is_a?(File) ? @pdf : StringIO.new(@pdf)
       pdf_io.rewind
 
-      # Création d'un nouveau PDF avec HexaPDF
+      # Create a new PDF using HexaPDF
       doc = ::HexaPDF::Document.new(io: pdf_io)
       doc.task(:pdfa, level: "3b") # PDF format A/3
 
-      # Ajout du XML au PDF
+      # Attach the XML file to the PDF
       file_spec = doc.files.add(
         xml_io,
         name: "factur-x.xml",
@@ -39,16 +39,16 @@ module UnovaFacturX
       doc.catalog[:AF] ||= []
       doc.catalog[:AF] << file_spec
 
-      # Réécriture des Metadata pour correspondre à Factur-X
+      # Rewrite the metadata to comply with Factur-X requirements
       doc.metadata.custom_metadata(metadata_xml)
 
-      # Renvoi du PDF en StringIO
+      # Return the PDF as a StringIO object
       doc.write_to_string
     end
 
     private
 
-    def metadata_xml # TODO : Utiliser les bonnes valeurs
+    def metadata_xml # TODO : Use invoice values
       <<~XML
         <rdf:Description rdf:about=""
                          xmlns:pdfaExtension="http://www.aiim.org/pdfa/ns/extension/"
